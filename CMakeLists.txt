@@ -49,6 +49,7 @@ target_link_libraries(pico_life
     pico_graphics
     cosmic_unicorn
 )
+
 pico_enable_stdio_usb(pico_life 1)
 
 # create map/bin/hex file etc.

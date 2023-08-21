@@ -11,8 +11,19 @@ using namespace pimoroni;
 PicoGraphics_PenRGB888 graphics(CosmicUnicorn::HEIGHT, CosmicUnicorn::WIDTH, nullptr);
 CosmicUnicorn cosmic_unicorn;
 
+//
+// Variables below help to show message once a simulation is hanged
+//
+const int same_state_limit = 100;
+int curr_same_state_count = 0;
+std::string message = "Restarting life";
+
+//
+// Prev state is needed to detect hanged simulations (period 2)
+//
+bool prev [CosmicUnicorn::HEIGHT][CosmicUnicorn::WIDTH];
 bool state[CosmicUnicorn::HEIGHT][CosmicUnicorn::WIDTH];
-bool next[CosmicUnicorn::HEIGHT][CosmicUnicorn::WIDTH];
+bool next [CosmicUnicorn::HEIGHT][CosmicUnicorn::WIDTH];
 
 int delay_ms = 100;
 
@@ -238,6 +249,36 @@ int count_alive_neighbours(int x, int y) {
   return count;
 }
 
+//
+// A method to scroll a given message few times. Parameters:
+// msg - message to display
+// times - how many times to scroll the message
+//
+void show_message(const std::string& msg, int times) {
+  int width = graphics.measure_text(msg, 1);
+  int iter = 0;
+  float scroll = -32.0f;
+
+  while (iter < times) {
+    scroll += 0.10f;
+
+    if (scroll > width) {
+      scroll = -32.0f;
+      iter++;
+    }
+
+    graphics.set_pen(0, 0, 0);
+    graphics.clear();
+
+    graphics.set_pen(230, 150, 0);
+    graphics.text(msg, Point(0 - scroll, 14), -1, 0.55);
+
+    cosmic_unicorn.update(&graphics);
+
+    sleep_ms(2);
+  }
+}
+
 
 int main() {
   bool skip_update = false; // Used to hold simulation while button is pressed
@@ -261,7 +302,7 @@ int main() {
     }
 
     if (cosmic_unicorn.is_pressed(cosmic_unicorn.SWITCH_VOLUME_DOWN)) {
-      delay_ms = MAX(50, delay_ms - 10);
+      delay_ms = MAX(20, delay_ms - 10);
     }
 
     if (cosmic_unicorn.is_pressed(cosmic_unicorn.SWITCH_SLEEP)) {
@@ -319,10 +360,44 @@ int main() {
       }
     }
 
+    bool same_states = true;
+    bool is_empty = true;
+
+    for (int y = 0; y < CosmicUnicorn::HEIGHT; y++) {
+      for (int x = 0; x < CosmicUnicorn::WIDTH; x++) {
+        is_empty &= !prev[y][x];
+        if (prev[y][x] != next[y][x]) {
+          same_states = false;
+          break;
+        }
+      }
+      if (!same_states) {
+        break;
+      }
+    }
+
+    if (same_states && !is_empty) {
+      curr_same_state_count++;
+    } else {
+      curr_same_state_count = 0;
+    }
+
+    for (int y = 0; y < CosmicUnicorn::HEIGHT; y++) {
+      for (int x = 0; x < CosmicUnicorn::WIDTH; x++) {
+        prev[y][x] = state[y][x];
+      }
+    }
+
     for (int y = 0; y < CosmicUnicorn::HEIGHT; y++) {
       for (int x = 0; x < CosmicUnicorn::WIDTH; x++) {
         state[y][x] = next[y][x];
       }
+    }
+
+    if (curr_same_state_count > same_state_limit) {
+      curr_same_state_count = 0;
+      show_message(message, 3);
+      randomize_state();
     }
 
     sleep_ms(delay_ms);
