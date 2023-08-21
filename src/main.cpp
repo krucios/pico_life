@@ -150,6 +150,22 @@ const bool patterns[3][CosmicUnicorn::HEIGHT][CosmicUnicorn::WIDTH] = {
   }
 };
 
+const float brightness[] = {0.05f, 0.25f, 0.5f, 0.75f, 1.0f};
+int brightness_idx = 0;
+bool brightness_idx_lock = false;
+
+RGB colors[] = {
+  {230, 150,   0}, // yellow
+  {220,  20,  60}, // red
+  { 64, 224, 208}, // turquoise
+  {127, 250,   0}, // green
+  { 30, 144, 255}, // blue
+  {255,  20, 147}, // pink
+  {255, 255, 255}, // white
+};
+int color_idx = 0;
+bool color_idx_lock = false;
+
 //
 // Clears game's state. Useful if need to start from blank
 //
@@ -183,7 +199,7 @@ void draw_state() {
   for (int y = 0; y < CosmicUnicorn::HEIGHT; y++) {
     for (int x = 0; x < CosmicUnicorn::WIDTH; x++) {
       if (state[y][x]) {
-        graphics.set_pen(230, 150, 0);
+        graphics.set_pen(colors[color_idx].to_rgb888());
         graphics.pixel(Point(x, y));
       }
     }
@@ -270,7 +286,7 @@ void show_message(const std::string& msg, int times) {
     graphics.set_pen(0, 0, 0);
     graphics.clear();
 
-    graphics.set_pen(230, 150, 0);
+    graphics.set_pen(colors[color_idx].to_rgb888());
     graphics.text(msg, Point(0 - scroll, 14), -1, 0.55);
 
     cosmic_unicorn.update(&graphics);
@@ -290,11 +306,22 @@ int main() {
 
   while (true) {
     if (cosmic_unicorn.is_pressed(cosmic_unicorn.SWITCH_BRIGHTNESS_UP)) {
-      cosmic_unicorn.adjust_brightness(+0.01);
+      if (!brightness_idx_lock) {
+        brightness_idx_lock = true;
+        brightness_idx = (brightness_idx + 1) % (sizeof(brightness) / sizeof(*brightness));
+        cosmic_unicorn.set_brightness(brightness[brightness_idx]);
+      }
+    } else {
+      brightness_idx_lock = false;
     }
 
     if (cosmic_unicorn.is_pressed(cosmic_unicorn.SWITCH_BRIGHTNESS_DOWN)) {
-      cosmic_unicorn.adjust_brightness(-0.01);
+      if (!color_idx_lock) {
+        color_idx_lock = true;
+        color_idx = (color_idx + 1) % (sizeof(colors) / sizeof(*colors));
+      }
+    } else {
+      color_idx_lock = false;
     }
 
     if (cosmic_unicorn.is_pressed(cosmic_unicorn.SWITCH_VOLUME_UP)) {
@@ -337,6 +364,8 @@ int main() {
 
       insert_pattern(0, 0, pattern_idx);
       skip_update = true;
+    } else {
+      pattern_idx_lock = false;
     }
 
     draw_state();
@@ -344,8 +373,6 @@ int main() {
     if (skip_update) {
       skip_update = false;
       continue;
-    } else {
-      pattern_idx_lock = false;
     }
 
     for (int y = 0; y < CosmicUnicorn::HEIGHT; y++) {
