@@ -270,24 +270,17 @@ int count_alive_neighbours(int x, int y) {
 // msg - message to display
 // times - how many times to scroll the message
 //
-void show_message(const std::string& msg, int times) {
-  int width = graphics.measure_text(msg, 1);
-  int iter = 0;
+void show_message(const std::string& msg) {
   float scroll = -32.0f;
 
-  while (iter < times) {
+  while (scroll < 5) {
     scroll += 0.10f;
-
-    if (scroll > width) {
-      scroll = -32.0f;
-      iter++;
-    }
 
     graphics.set_pen(0, 0, 0);
     graphics.clear();
 
     graphics.set_pen(colors[color_idx].to_rgb888());
-    graphics.text(msg, Point(0 - scroll, 14), -1, 0.55);
+    graphics.text(msg, Point(0, scroll), -1, 0.55);
 
     cosmic_unicorn.update(&graphics);
 
@@ -301,7 +294,7 @@ int main() {
 
   stdio_init_all();
   cosmic_unicorn.init();
-
+q
   randomize_state();
 
   while (true) {
@@ -423,7 +416,8 @@ int main() {
 
     if (curr_same_state_count > same_state_limit) {
       curr_same_state_count = 0;
-      show_message(message, 3);
+      show_message(message);
+      sleep_ms(2000);
       randomize_state();
     }
 
