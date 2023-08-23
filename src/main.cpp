@@ -21,9 +21,8 @@ std::string message = "Restarting life";
 //
 // Prev state is needed to detect hanged simulations (period 2)
 //
-bool prev [CosmicUnicorn::HEIGHT][CosmicUnicorn::WIDTH];
-bool state[CosmicUnicorn::HEIGHT][CosmicUnicorn::WIDTH];
-bool next [CosmicUnicorn::HEIGHT][CosmicUnicorn::WIDTH];
+bool state[4][CosmicUnicorn::HEIGHT][CosmicUnicorn::WIDTH];
+bool next    [CosmicUnicorn::HEIGHT][CosmicUnicorn::WIDTH];
 
 int delay_ms = 100;
 
@@ -172,7 +171,7 @@ bool color_idx_lock = false;
 void clear_state() {
   for (int y = 0; y < CosmicUnicorn::HEIGHT; y++) {
     for (int x = 0; x < CosmicUnicorn::WIDTH; x++) {
-      state[y][x] = 0;
+      state[0][y][x] = 0;
     }
   }
 }
@@ -183,7 +182,7 @@ void clear_state() {
 void randomize_state() {
   for (int y = 0; y < CosmicUnicorn::HEIGHT; y++) {
     for (int x = 0; x < CosmicUnicorn::WIDTH; x++) {
-      state[y][x] = rand() % 2;
+      state[0][y][x] = rand() % 2;
     }
   }
 }
@@ -198,9 +197,17 @@ void draw_state() {
 
   for (int y = 0; y < CosmicUnicorn::HEIGHT; y++) {
     for (int x = 0; x < CosmicUnicorn::WIDTH; x++) {
-      if (state[y][x]) {
-        graphics.set_pen(colors[color_idx].to_rgb888());
-        graphics.pixel(Point(x, y));
+      for (int i = sizeof(state) / sizeof(*state) - 1; i >= 0; i--) {
+        if (state[i][y][x]) {
+          int fade_factor = 1 << i;
+
+          RGB faded(colors[color_idx].r / fade_factor,
+                    colors[color_idx].g / fade_factor,
+                    colors[color_idx].b / fade_factor);
+
+          graphics.set_pen(faded.to_rgb888());
+          graphics.pixel(Point(x, y));
+        }
       }
     }
   }
@@ -217,17 +224,17 @@ void draw_state() {
 //
 void insert_glider(int dx, int dy, bool invert) {
   if (invert) {
-    state[dy    ][dx    ] = true;
-    state[dy    ][dx + 1] = true;
-    state[dy    ][dx + 2] = true;
-    state[dy + 1][dx + 2] = true;
-    state[dy + 2][dx + 1] = true;
+    state[0][dy    ][dx    ] = true;
+    state[0][dy    ][dx + 1] = true;
+    state[0][dy    ][dx + 2] = true;
+    state[0][dy + 1][dx + 2] = true;
+    state[0][dy + 2][dx + 1] = true;
   } else {
-    state[dy    ][dx + 1] = true;
-    state[dy + 1][dx + 2] = true;
-    state[dy + 2][dx    ] = true;
-    state[dy + 2][dx + 1] = true;
-    state[dy + 2][dx + 2] = true;
+    state[0][dy    ][dx + 1] = true;
+    state[0][dy + 1][dx + 2] = true;
+    state[0][dy + 2][dx    ] = true;
+    state[0][dy + 2][dx + 1] = true;
+    state[0][dy + 2][dx + 2] = true;
   }
 }
 
@@ -242,7 +249,7 @@ void insert_glider(int dx, int dy, bool invert) {
 void insert_pattern(int dx, int dy, int pattern_n) {
   for (int y = 0; y < CosmicUnicorn::HEIGHT; y++) {
     for (int x = 0; x < CosmicUnicorn::WIDTH; x++) {
-      state[y + dy][x + dx] |= patterns[pattern_n][y][x];
+      state[0][y + dy][x + dx] |= patterns[pattern_n][y][x];
     }
   }
 }
@@ -259,7 +266,7 @@ int count_alive_neighbours(int x, int y) {
   for (int i = 0; i < dsize; i++) {
     int nx = (x + dx[i] + CosmicUnicorn::WIDTH ) % CosmicUnicorn::WIDTH;
     int ny = (y + dy[i] + CosmicUnicorn::HEIGHT) % CosmicUnicorn::HEIGHT;
-    count += state[ny][nx];
+    count += state[0][ny][nx];
   }
 
   return count;
@@ -294,7 +301,7 @@ int main() {
 
   stdio_init_all();
   cosmic_unicorn.init();
-q
+
   randomize_state();
 
   while (true) {
@@ -372,7 +379,7 @@ q
       for (int x = 0; x < CosmicUnicorn::WIDTH; x++) {
         int alive_neighbours = count_alive_neighbours(x, y);
 
-        if (state[y][x]) {
+        if (state[0][y][x]) {
           next[y][x] = alive_neighbours >= 2 && alive_neighbours <= 3;
         } else {
           next[y][x] = alive_neighbours == 3;
@@ -385,8 +392,8 @@ q
 
     for (int y = 0; y < CosmicUnicorn::HEIGHT; y++) {
       for (int x = 0; x < CosmicUnicorn::WIDTH; x++) {
-        is_empty &= !prev[y][x];
-        if (prev[y][x] != next[y][x]) {
+        is_empty &= !state[1][y][x];
+        if (state[1][y][x] != next[y][x]) {
           same_states = false;
           break;
         }
@@ -404,13 +411,15 @@ q
 
     for (int y = 0; y < CosmicUnicorn::HEIGHT; y++) {
       for (int x = 0; x < CosmicUnicorn::WIDTH; x++) {
-        prev[y][x] = state[y][x];
+        for (int i = sizeof(state) / sizeof(*state) - 1; i > 0; i--) {
+          state[i][y][x] = state[i - 1][y][x];
+        }
       }
     }
 
     for (int y = 0; y < CosmicUnicorn::HEIGHT; y++) {
       for (int x = 0; x < CosmicUnicorn::WIDTH; x++) {
-        state[y][x] = next[y][x];
+        state[0][y][x] = next[y][x];
       }
     }
 
