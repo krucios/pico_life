@@ -39,15 +39,20 @@ target_include_directories(pico_life PRIVATE
 # Include required libraries from Pimoroni SDK
 include($ENV{PIMORONI_PICO_PATH}/libraries/pico_graphics/pico_graphics.cmake)
 include($ENV{PIMORONI_PICO_PATH}/libraries/cosmic_unicorn/cosmic_unicorn.cmake)
+include($ENV{PIMORONI_PICO_PATH}/libraries/interstate75/interstate75.cmake)
 
 # Pull in everything together
 target_link_libraries(pico_life
     pico_stdlib
+    pico_multicore
+    hardware_vreg
     hardware_pio
     hardware_adc
     hardware_dma
     pico_graphics
     cosmic_unicorn
+    hub75
+    interstate75
 )
 
 pico_enable_stdio_usb(pico_life 1)
