@@ -1,5 +1,5 @@
 # Raspberry Pi Pico Life
-A Convey's game of life on Pimoroni's Cosmic Unicorn (Pi Pico). If you want a nice-looking piece of hardware which provides ambient light look no further! This project is like a lava lamp and it's intended to nicely blend into your home environment and serve as a point of interest.
+A Conway's game of life on Pimoroni's Cosmic Unicorn (Pi Pico). If you want a nice-looking piece of hardware which provides ambient light look no further! This project is like a lava lamp and it's intended to nicely blend into your home environment and serve as a point of interest.
 
 ![IMG_4013](https://github.com/krucios/pico_life/assets/7770409/a22bc96b-99f0-4d57-87ac-f6f92da315fa)
 ![IMG_4012](https://github.com/krucios/pico_life/assets/7770409/cefcf953-237a-4bd0-9a79-3ae81f91af1a)
